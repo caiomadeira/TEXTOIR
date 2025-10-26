@@ -39,9 +39,13 @@ def save_model(model, model_dir):
         with open(model_config_file, "w") as f:
             f.write(save_model.config.to_json_string())
 
-def restore_model(model, model_dir):
-    output_model_file = os.path.join(model_dir, WEIGHTS_NAME)
-    model.load_state_dict(torch.load(output_model_file))
+def restore_model(model, output_model_file):
+    if os.path.exists(output_model_file):
+        print(f'Restoring model from {output_model_file}')
+        model.load_state_dict(torch.load(output_model_file))
+    else:
+        print(f'Model not found at {output_model_file}. Skipping restore, using initial model.')
+        
     return model
 
 def save_results(args, test_results, debug_args = None):

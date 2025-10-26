@@ -3,8 +3,8 @@ import os
 import numpy as np
 import copy
 from sklearn.metrics import confusion_matrix
-from keras.models import Model
-from keras.optimizers import SGD
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import SGD
 from tqdm import trange 
 from configs.base import ParamManager
 from utils.metrics import clustering_score

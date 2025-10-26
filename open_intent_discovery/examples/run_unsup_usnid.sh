@@ -19,7 +19,7 @@ do
             --gpu_id '1' \
             --results_file_name 'results_unsupervised.csv' \
             --save_results \
-            --output_dir '/home/sharing/disk2/zhl/TEXTOIR/outputs_un_pre/' 
+            --output_dir './outputs/' 
         done
     done
 done
