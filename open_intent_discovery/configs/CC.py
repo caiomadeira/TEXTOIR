@@ -21,7 +21,7 @@ class Param():
         """
         hyper_parameters = {
 
-            'pretrained_bert_model': "/home/sharing/disk1/pretrained_embedding/bert/uncased_L-12_H-768_A-12/",
+            'pretrained_bert_model': '/home/caiomadeira/models/scibert_scivocab_uncased'",
             'num_labels': None,
             'num_train_epochs': 100,
             'max_seq_length': None, 

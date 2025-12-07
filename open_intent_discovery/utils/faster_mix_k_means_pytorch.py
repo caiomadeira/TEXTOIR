@@ -2,7 +2,7 @@ import numpy as np
 import copy
 import random
 #from project_utils.cluster_utils import cluster_acc
-from sklearn.utils._joblib import Parallel, delayed, effective_n_jobs
+from joblib import Parallel, delayed, effective_n_jobs
 from sklearn.utils import check_random_state
 import torch
 

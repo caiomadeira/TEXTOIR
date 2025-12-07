@@ -1,15 +1,15 @@
-easydict==1.9
+easydict
 #faiss==1.7.2
-faiss_gpu==1.7.2
-matplotlib==3.5.2
-nltk==3.7
-numpy==1.23.1
-pandas==1.4.3
-scikit_learn==1.2.0
-scipy==1.8.1
-sentence_transformers==2.2.2
-torch==1.8.1
-tqdm==4.64.0
-transformers==4.20.1
+faiss_gpu
+matplotlib
+nltk
+numpy
+pandas
+scikit_learn
+scipy
+sentence_transformers
+torch
+tqdm
+transformers
 
 

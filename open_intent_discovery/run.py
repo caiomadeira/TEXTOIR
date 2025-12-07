@@ -24,7 +24,7 @@ def parse_arguments():
 
     parser.add_argument("--known_cls_ratio", default=0.75, type=float, help="The number of known classes")
     
-    parser.add_argument("--num_workers", default=8, type=int, help="The number of known classes")
+    parser.add_argument("--num_workers", default=0, type=int, help="The number of known classes")
 
     parser.add_argument("--labeled_ratio", default=0.1, type=float, help="The ratio of labeled samples in the training set")
     
@@ -40,11 +40,11 @@ def parse_arguments():
 
     parser.add_argument("--backbone", type=str, default='bert', help="which backbone to use")
     
-    parser.add_argument('--setting', type=str, default='semi_supervised', help="Type for clustering methods.")
+    parser.add_argument('--setting', type=str, default='unsupervised', help="Type for clustering methods.")
 
     parser.add_argument("--config_file_name", type=str, default='DeepAligned.py', help = "The name of the config file.")
 
-    parser.add_argument('--seed', type=int, default=0, help="random seed for initialization")
+    parser.add_argument('--seed', type=int, default=42, help="random seed for initialization")
 
     parser.add_argument("--gpu_id", type=str, default='0', help="Select the GPU id")
 
@@ -53,7 +53,7 @@ def parse_arguments():
     parser.add_argument("--data_dir", default = sys.path[0]+'/../data', type=str,
                         help="The input data dir. Should contain the .csv files (or other data files) for the task.")
 
-    parser.add_argument("--output_dir", default= '/home/sharing/disk1/zhl/TEXTOIR/outputs', type=str, 
+    parser.add_argument("--output_dir", default= '/home/caiomadeira/Desktop/nlp/TEXTOIR/open_intent_discovery/results', type=str, 
                         help="The output directory where all train data will be written.") 
 
     parser.add_argument("--model_dir", default='models', type=str, 

@@ -4,7 +4,7 @@ from .bert import BertForConstrainClustering, BertForDTC, BertForKCL_Similarity,
 from .glove import GloVeEmbeddingVectorizer
 from .sae import get_stacked_autoencoder
 
-backbones_map = {   
+backbones_map = {   'bert': BERT_USNID_UNSUP, # some errors related here: KeyError: 'bert'. bert for unsup usnid is mapped with other name.
                     'bert_CDAC': BertForConstrainClustering,
                     'bert_DTC': BertForDTC,
                     'bert_KCL_simi': BertForKCL_Similarity,

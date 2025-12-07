@@ -87,8 +87,12 @@ class PretrainUnsupUSNIDManager:
 
     def set_model_optimizer(self, args, data, model):
         
-        self.model = model.set_model(args, data, 'bert', args.freeze_pretrain_bert_parameters)   
-        self.optimizer , self.scheduler = model.set_optimizer(self.model, data.dataloader.num_train_examples, args.pretrain_batch_size, \
+        self.model = model.set_model(args, data, 'bert', args.freeze_pretrain_bert_parameters)
+        if hasattr(data.dataloader, 'train_unlabeled_examples'):
+            num_examples = len(data.dataloader.train_unlabeled_examples)
+        else:
+            num_examples = len(data.dataloader.train_examples)
+        self.optimizer , self.scheduler = model.set_optimizer(self.model, num_examples, args.pretrain_batch_size, \
             args.num_train_epochs, args.lr_pre, args.warmup_proportion)
         
         self.device = model.device

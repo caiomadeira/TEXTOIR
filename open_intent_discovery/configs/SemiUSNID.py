@@ -28,7 +28,7 @@ class Param():
         if args.dataset == 'banking':
             print("==============banking config")
             hyper_parameters = {
-                'pretrained_bert_model': '/home/sharing/disk1/pretrained_embedding/bert/uncased_L-12_H-768_A-12/',
+                'pretrained_bert_model': '/home/caiomadeira/models/scibert_scivocab_uncased',
                 'max_seq_length': None, 
                 'num_pretrain_epochs': 100,
                 'num_train_epochs': 100,
@@ -56,7 +56,7 @@ class Param():
         elif args.dataset == 'clinc':
             print("==============clinc config")
             hyper_parameters = {
-                'pretrained_bert_model': '/home/sharing/disk1/pretrained_embedding/bert/uncased_L-12_H-768_A-12/',
+                'pretrained_bert_model': '/home/caiomadeira/models/scibert_scivocab_uncased',
                 'max_seq_length': None, 
                 'num_pretrain_epochs': 100,
                 'num_train_epochs': 100,
@@ -84,7 +84,7 @@ class Param():
         elif args.dataset == 'stackoverflow':
             print("==============stackoverflow config")
             hyper_parameters = {
-                'pretrained_bert_model': '/home/sharing/disk1/pretrained_embedding/bert/uncased_L-12_H-768_A-12/',
+                'pretrained_bert_model': '/home/caiomadeira/models/scibert_scivocab_uncased',
                 'max_seq_length': None, 
                 'num_pretrain_epochs': 100,
                 'num_train_epochs': 100,

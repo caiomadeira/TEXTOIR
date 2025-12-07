@@ -28,12 +28,12 @@ class Param():
         if args.dataset == 'banking':
             print("==============banking config")
             hyper_parameters = {
-                'pretrained_bert_model': 'bert-base-uncased',
+                'pretrained_bert_model': '/home/caiomadeira/models/scibert_scivocab_uncased',
                 'max_seq_length': None, 
-                'num_pretrain_epochs': 100,
-                'num_train_epochs': 100,
+                'num_pretrain_epochs': 50,
+                'num_train_epochs': 20,
                 'num_labels': None,
-                'pretrain': False,
+                'pretrain': True,
                 'freeze_pretrain_bert_parameters': True,
                 'freeze_train_bert_parameters': True,
                 'feat_dim': 768,
@@ -56,10 +56,10 @@ class Param():
         elif args.dataset == 'clinc':
             print("==============clinc config")
             hyper_parameters = {
-                'pretrained_bert_model': '/home/sharing/disk1/pretrained_embedding/bert/uncased_L-12_H-768_A-12/',
+                'pretrained_bert_model': '/home/caiomadeira/models/scibert_scivocab_uncased',
                 'max_seq_length': None, 
-                'num_pretrain_epochs': 100,
-                'num_train_epochs': 100,
+                'num_pretrain_epochs': 1,
+                'num_train_epochs': 1,
                 'num_labels': None,
                 'pretrain': True,
                 'freeze_pretrain_bert_parameters': True,
@@ -79,16 +79,16 @@ class Param():
                 'pretrain_batch_size': 128,
                 'eval_batch_size': 64,
                 'test_batch_size': 64,
-                'wait_patient': 10,
+                'wait_patient': 1,
             }
              
         elif args.dataset == 'stackoverflow':
             print("==============stackoverflow config")
             hyper_parameters = {
-                'pretrained_bert_model': '/home/sharing/disk1/pretrained_embedding/bert/uncased_L-12_H-768_A-12/',
+                'pretrained_bert_model': '/home/caiomadeira/models/scibert_scivocab_uncased',
                 'max_seq_length': None, 
-                'num_pretrain_epochs': 100,
-                'num_train_epochs': 100,
+                'num_pretrain_epochs': 1,
+                'num_train_epochs': 1,
                 'num_labels': None,
                 'pretrain': True,
                 'freeze_pretrain_bert_parameters': True,
@@ -108,7 +108,7 @@ class Param():
                 'pretrain_batch_size': 128,
                 'eval_batch_size': 64,
                 'test_batch_size': 64,
-                'wait_patient': 10,
+                'wait_patient': 1,
             }
 
         return hyper_parameters
