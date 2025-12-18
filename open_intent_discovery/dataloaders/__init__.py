@@ -5,6 +5,7 @@ max_seq_lengths = {     'stackoverflow':45,
                         'clinc':30, 
                         'banking':55, 
                         'snips': 35,
+                        'aries':256
                     }
                     
 backbone_loader_map = {
@@ -89,5 +90,7 @@ benchmark_labels = {
                 [
                     "AddToPlaylist", "BookRestaurant", "GetWeather", "PlayMusic", "RateBook", 
                     "SearchCreativeWork", "SearchScreeningEvent"
-                ]
+                ],
+
+    'aries': ['unknown']
 }

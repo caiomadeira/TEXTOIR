@@ -20,7 +20,7 @@ def parse_arguments():
 
     parser.add_argument('--log_dir', type=str, default='logs', help="Logger directory.")
 
-    parser.add_argument("--dataset", default='banking', type=str, help="The name of the dataset to train selected")
+    parser.add_argument("--dataset", default='aries', type=str, help="The name of the dataset to train selected")
 
     parser.add_argument("--known_cls_ratio", default=0.75, type=float, help="The number of known classes")
     
@@ -161,4 +161,3 @@ if __name__ == '__main__':
     else:
         run(args, logger)
     
-
