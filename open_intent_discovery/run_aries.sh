@@ -14,7 +14,7 @@ cd ~/TEXTOIR/open_intent_discovery
 
 mkdir -p logs
 
-python run.py \
+python -u run.py \
     --dataset aries \
     --method UnsupUSNID \
     --setting unsupervised \
