@@ -18,6 +18,12 @@ from utils.metrics import clustering_score
 from utils.functions import set_seed, view_generator
 from losses import loss_map
 from .pretrain import PretrainUnsupUSNIDManager
+import pandas as pd
+
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+import matplotlib
+matplotlib.use('Agg')
 
 class UnsupUSNIDManager:
     
@@ -172,10 +178,49 @@ class UnsupUSNIDManager:
         feats = outputs['feats']
         y_true = outputs['y_true']
 
-        km = KMeans(n_clusters = self.num_labels, random_state=args.seed, init = self.centroids).fit(feats) 
-       
+        km = KMeans(n_clusters = self.num_labels, random_state=args.seed, init = self.centroids).fit(feats)
         y_pred = km.labels_
-        
+
+        # self.logger.info("t-sne plot")
+        # try:
+        #     self.plot_tsne(args, feats, y_pred)
+        #     self.logger.info("t-sne succesful saved.")
+        # except Exception as e:
+        #     self.logger.error(f"error: {e}")
+        self.logger.info("generating t-sne")
+        try:
+            if len(np.unique(y_pred)) > 1:
+                self.plot_tsne(args, feats, y_pred)
+                self.logger.info(f"t-SNE salved {args.output_dir}")
+            else:
+                self.logger.warning("t-SNE skipped just 1 cluster detected.")
+        except Exception as e:
+            self.logger.error(f"Erro t-SNE: {e}")
+
+        model_to_save = self.model.module if hasattr(self.model, 'module') else self.model
+        output_model_file = os.path.join(args.output_dir, "pytorch_model.bin") 
+        torch.save(model_to_save.state_dict(), output_model_file)
+        self.logger.info(f"model saved {output_model_file}")
+
+        try:
+            loader = data.dataloader 
+            texts = [ex.text_a for ex in loader.test_examples]
+            
+            df_out = pd.DataFrame({
+                'text': texts,
+                'cluster': y_pred,
+                'label_dummy': y_true 
+            })
+            
+            output_csv_file = os.path.join(args.output_dir, "cluster_predictions.tsv")
+            df_out.to_csv(output_csv_file, sep='\t', index=False)
+            self.logger.info(f"PREDIÇÕES SALVAS COM SUCESSO: {output_csv_file}")
+            
+        except Exception as e:
+            self.logger.error(f"ERRO CRÍTICO AO SALVAR CSV: {e}")
+            self.logger.info(f"DEBUG - Atributos de data: {dir(data)}")
+            np.savetxt(os.path.join(args.output_dir, "cluster_ids.txt"), y_pred, fmt='%d')
+
         test_results = clustering_score(y_true, y_pred)
         cm = confusion_matrix(y_true, y_pred)
         
@@ -191,6 +236,31 @@ class UnsupUSNIDManager:
         test_results['y_pred'] = y_pred
 
         return test_results
+    
+    def plot_tsne(self, args, feats, labels):
+        tsne = TSNE(n_components=1, perplexity=30, random_state=args.seed, max_iter=1000, n_jobs=4)
+        embeddings_2d = tsne.fit_transform(feats)
+        plt.figure(figsize=(16, 12))
+        unique_labels = np.unique(labels)
+        cmap = plt.get_cmap('tab20') if len(unique_labels) <= 20 else plt.get_cmap('nipy_spectral')
+
+        scatter = plt.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c=labels,
+                              cmap=cmap, alpha=0.7, s=20, edgecolors='k', linewidths=0.1)
+        
+        plt.colorbar(scatter, ticks=unique_labels, label='cluster ID')
+        plt.title(f'Cluster Visualization (t-SNE) - {args.dataset}\nMethod: {args.method} - Clusters: {len(unique_labels)}')
+        plt.xlabel('Dim 1')
+        plt.ylabel('Dim 2')
+        plt.grid(True, linestyle='--', alpha=0.3)
+
+        file_name = f"tsne_{args.dataset}_{args.method}_seed{args.seed}.png"
+        output_path = os.path.join(args.output_dir, file_name)
+        
+        if not os.path.exists(args.output_dir):
+            os.makedirs(args.output_dir)
+            
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.close()
 
     def get_outputs(self, args, mode, model):
         

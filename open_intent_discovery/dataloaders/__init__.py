@@ -92,5 +92,5 @@ benchmark_labels = {
                     "SearchCreativeWork", "SearchScreeningEvent"
                 ],
 
-    'aries': ['unknown']
+    'aries': [str(i) for i in range(50)]
 }

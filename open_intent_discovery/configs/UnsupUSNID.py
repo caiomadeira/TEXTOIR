@@ -111,9 +111,8 @@ class Param():
                 'wait_patient': 1,
             }
 
-
         elif args.dataset == 'aries':
-            print("==============stackoverflow config")
+            print("==============aries config")
             hyper_parameters = {
                 'pretrained_bert_model': '/home/caiosouza/TEXTOIR/models/scibert_scivocab_uncased',
                 'max_seq_length': None, 
@@ -140,8 +139,37 @@ class Param():
                 'test_batch_size': 64,
                 'wait_patient': 10,
             }
+        # elif args.dataset == 'aries':
+        #     print("==============aries TEST config")
+        #     hyper_parameters = {
+        #         'pretrained_bert_model': '/home/caiosouza/TEXTOIR/models/scibert_scivocab_uncased',
+        #         'max_seq_length': None, 
+        #         'num_pretrain_epochs': 1,
+        #         'num_train_epochs': 1,
+        #         'num_labels': None,
+        #         'pretrain': True,
+        #         'freeze_pretrain_bert_parameters': True,
+        #         'freeze_train_bert_parameters': True,
+        #         'feat_dim': 768,
+        #         'warmup_proportion': 0.1,
+        #         'lr_pre': 5e-5,
+        #         'lr': 2e-5,
+        #         'loss_fct': 'CrossEntropyLoss',
+        #         'pretrain_temperature': 0.07,
+        #         'train_temperature': 0.07,
+        #         're_prob': 0.5,
+        #         'activation': 'tanh',
+        #         'tol': 0.0005,
+        #         'grad_clip': 1.0,
+        #         'train_batch_size': 128,
+        #         'pretrain_batch_size': 128,
+        #         'eval_batch_size': 64,
+        #         'test_batch_size': 64,
+        #         'wait_patient': 1,
+        #     }
 
         return hyper_parameters
+
 """
 python run.py \
     --dataset aries \
@@ -153,6 +181,7 @@ python run.py \
     --config_file_name UnsupUSNID \
     --cluster_num_factor 1.0 \
     --gpu_id 0 \
+    --save_model \
     --save_results \
     --output_dir './outputs/'
 """

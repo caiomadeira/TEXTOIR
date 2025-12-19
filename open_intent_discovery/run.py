@@ -157,7 +157,6 @@ if __name__ == '__main__':
                 args[key] = result[i]         
             
             run(args, logger, debug_args=debug_args)
-
     else:
         run(args, logger)
     

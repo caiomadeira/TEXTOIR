@@ -1,2 +1,6 @@
 NMI,ARI,ACC,dataset,method,backbone,known_cls_ratio,labeled_ratio,cluster_num_factor,logger_file_name,seed
 38.74,6.47,17.53,banking,UnsupUSNID,bert,0.75,0.1,1.0,UnsupUSNID_banking_bert_2025-12-07-02-27-46,42
+100.0,100.0,100.0,aries,UnsupUSNID,bert,0.0,0.1,1.0,UnsupUSNID_aries_bert_2025-12-19-09-57-30,42
+100.0,100.0,100.0,aries,UnsupUSNID,bert,0.0,0.1,1.0,UnsupUSNID_aries_bert_2025-12-19-10-38-49,42
+100.0,100.0,100.0,aries,UnsupUSNID,bert,0.0,0.1,1.0,UnsupUSNID_aries_bert_2025-12-19-11-26-56,42
+100.0,100.0,100.0,aries,UnsupUSNID,bert,0.0,0.1,1.0,UnsupUSNID_aries_bert_2025-12-19-12-31-24,42
