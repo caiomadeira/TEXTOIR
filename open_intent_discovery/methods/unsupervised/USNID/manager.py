@@ -23,6 +23,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 import matplotlib
+
+import csv
+import seaborn as sns
+
 matplotlib.use('Agg')
 
 class UnsupUSNIDManager:
@@ -98,6 +102,11 @@ class UnsupUSNIDManager:
                       
     def train(self, args, data): 
 
+        log_file_path = os.path.join(args.output_dir, 'training_metrics.csv')
+        with open(log_file_path, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['epoch', 'total_loss', 'delta_label', 'num_active_clusters', 'entropy', 'lr'])
+
         self.centroids = None
         last_preds = None
         
@@ -110,9 +119,26 @@ class UnsupUSNIDManager:
             current_preds = pseudo_labels.numpy()
             delta_label = np.sum(current_preds != last_preds).astype(np.float32) / current_preds.shape[0] 
             last_preds = np.copy(current_preds)
-            
+
+            unique_labels, counts = np.unique(current_preds, return_counts=True)
+            num_active_clusters = len(unique_labels)
+
+            probs = counts / len(current_preds)
+            # se a entropia for 0, todos osd ados estao em um cluster so.
+            # o calculo da entropia serve pra medir o quao espaços os dados estao
+            entropy = -np.sum(probs * np.log(probs + 1e-10))
+
+            if epoch % 5 == 0:
+                plt.figure(figsize=(10, 4))
+                plt.bar(unique_labels, counts, color='skyblue', edgecolor='black')
+                plt.xlabel('Cluster ID')
+                plt.ylabel('Reviews count')
+                plt.title(f'Clusters distribution - Epoch {epoch}\n(active: {num_active_clusters}/{self.num_labels}, entropy: {entropy:.2f})')
+                plt.grid(axis='y', alpha=0.3)
+                plt.savefig(os.path.join(args.output_dir, f'dist_epoch_{epoch}.png'))
+                plt.close()
+
             if epoch > 0:
-                
                 self.logger.info("***** Epoch: %s *****", str(epoch))
                 self.logger.info('Training Loss: %f', np.round(tr_loss, 5))
                 self.logger.info('Delta Label: %f', delta_label)
@@ -168,6 +194,11 @@ class UnsupUSNIDManager:
                     self.scheduler.step()
                 
             tr_loss = tr_loss / nb_tr_steps
+            current_lr = self.optimizer.param_groups[0]['lr'] # peguei o leanring rate atual
+            
+            with open(log_file_path, 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([epoch, tr_loss, delta_label, num_active_clusters, entropy, current_lr])
                 
         if args.save_model:
             save_model(self.model, args.model_output_dir)
@@ -187,15 +218,15 @@ class UnsupUSNIDManager:
         #     self.logger.info("t-sne succesful saved.")
         # except Exception as e:
         #     self.logger.error(f"error: {e}")
-        self.logger.info("generating t-sne")
-        try:
-            if len(np.unique(y_pred)) > 1:
-                self.plot_tsne(args, feats, y_pred)
-                self.logger.info(f"t-SNE salved {args.output_dir}")
-            else:
-                self.logger.warning("t-SNE skipped just 1 cluster detected.")
-        except Exception as e:
-            self.logger.error(f"Erro t-SNE: {e}")
+        # self.logger.info("generating t-sne")
+        # try:
+        #     if len(np.unique(y_pred)) > 1:
+        #         self.plot_tsne(args, feats, y_pred)
+        #         self.logger.info(f"t-SNE salved {args.output_dir}")
+        #     else:
+        #         self.logger.warning("t-SNE skipped just 1 cluster detected.")
+        # except Exception as e:
+        #     self.logger.error(f"Erro t-SNE: {e}")
 
         model_to_save = self.model.module if hasattr(self.model, 'module') else self.model
         output_model_file = os.path.join(args.output_dir, "pytorch_model.bin") 
@@ -344,3 +375,47 @@ class UnsupUSNIDManager:
         train_dataloader = DataLoader(train_data, sampler = sampler, batch_size = args.train_batch_size)
 
         return train_dataloader
+    
+    def plot_density_distributions(self, args, feats, labels, centroids):
+        """
+        plotando a distr. de densidade (KDE) das distancias dos pontos aos centroides.
+        """
+
+        from scipy.spatial.distance import cdist
+        import seaborn as sms
+
+        dists = cdist(feats, centroids, metric='euclidean')
+        min_dists = np.min(dists, axis=1)
+        plt.figure(figsize=(12, 6))
+        
+        sns.kdeplot(min_dists, fill=True, color='purple', alpha=0.3, linewidth=2)
+        
+        mean_dist = np.mean(min_dists)
+        std_dist = np.std(min_dists)
+
+        plt.axvline(mean_dist, color='red', linestyle='--', label=f'Média: {mean_dist:.2f}')
+        plt.title(f'Cohesion analysis\n')
+        plt.xlabel('Euclidean distance to centroid')
+        plt.ylabel('Density (Frequency)')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+
+        output_path = os.path.join(args.output_dir, f'density_quality_epoch_final.png')
+        plt.savefig(output_path)
+        plt.close()
+        self.logger.info(f"Plot de densidade salvo em: {output_path}")
+        plt.figure(figsize=(12, 6))
+        
+        unique_labels, counts = np.unique(labels, return_counts=True)
+        top_clusters = unique_labels[np.argsort(-counts)[:5]]
+
+        for c in top_clusters:
+            cluster_mask = (labels == c)
+            cluster_dists = dists[cluster_mask, c]
+            sns.kdeplot(cluster_dists, label=f'Cluster {c} (N={counts[c]})', fill=False, linewidth=2)
+
+        plt.title('Cohesin comp: Top 5 Clusters')
+        plt.xlabel('Distance to center')
+        plt.legend()
+        plt.savefig(os.path.join(args.output_dir, f'density_per_cluster.png'))
+        plt.close()

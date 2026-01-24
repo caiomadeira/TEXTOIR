@@ -1,11 +1,13 @@
 from .bert_loader import BERT_Loader
 from .unsup_loader import UNSUP_Loader
 
+ARIES_ESTIMATE_K_RANGE = 20
+
 max_seq_lengths = {     'stackoverflow':45,
                         'clinc':30, 
                         'banking':55, 
                         'snips': 35,
-                        'aries':256
+                        'aries':128
                     }
                     
 backbone_loader_map = {
@@ -92,5 +94,5 @@ benchmark_labels = {
                     "SearchCreativeWork", "SearchScreeningEvent"
                 ],
 
-    'aries': [str(i) for i in range(50)]
+    'aries': [str(i) for i in range(ARIES_ESTIMATE_K_RANGE)]
 }

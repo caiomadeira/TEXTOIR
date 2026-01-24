@@ -1,20 +1,23 @@
 #!/bin/bash
 #SBATCH --job-name=aries_usnid     
-#SBATCH --time 1-0          
-#SBATCH --gpus 1                   
-#SBATCH --cpus-per-task 8
-#SBATCH --mem 32G                  
-#SBATCH --output=logs/aries_%j.out 
-#SBATCH --error=logs/aries_%j.err  
+#SBATCH --time=1-0          
+#SBATCH --gpus=2                   
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=32G                  
+#SBATCH --output=aries_%j.out 
+#SBATCH --error=aries_%j.err  
+#SBATCH --qos=high
 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate textoir
 
-cd ~/TEXTOIR/open_intent_discovery
+cd ~/nlp/TEXTOIR/open_intent_discovery || exit
 
 mkdir -p logs
 
-python -u run.py \
+if [[ "$1" == "scibert" ]]; then
+    echo "Iniciando treinamento com SCIBERT..."
+    python -u run.py \
     --dataset aries \
     --method UnsupUSNID \
     --setting unsupervised \
@@ -27,3 +30,10 @@ python -u run.py \
     --save_model \
     --save_results \
     --output_dir './outputs/'
+
+elif [[ "$1" == "specter2" ]]; then
+    echo "Modelo specter2 selecionado (Ainda não implementado)."
+else
+    echo "ERRO: Modelo inválido ou nenhum parâmetro passado."
+    echo "Uso correto: ./run_aries.sh scibert"
+fi

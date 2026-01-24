@@ -1,0 +1,62 @@
+
+EnvironmentNameNotFound: Could not find conda environment: textoir
+You can list all discoverable environments with `conda info --envs`.
+
+
+/var/lib/slurm/slurmd/job00813/slurm_script: line 14: cd: /home/caiosouza/TEXTOIR/open_intent_discovery: No such file or directory
+2026-01-22 18:46:29.617988: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+/home/caiosouza/nlp/TEXTOIR/open_intent_discovery/dataloaders/unsup_loader.py:67: SyntaxWarning: invalid escape sequence '\]'
+  tokenizer = Tokenizer(num_words = args.max_num_words, oov_token="<UNK>", filters='!"#$%&()*+-/:;<=>@[\]^_`{|}~')
+Discovery - Open Intent Discovery Begin...
+Discovery - Parameters Initialization...
+Discovery - Data and Model Preparation...
+Traceback (most recent call last):
+  File "/home/caiosouza/miniconda3/envs/llmastutor/lib/python3.12/site-packages/transformers/utils/hub.py", line 479, in cached_files
+    hf_hub_download(
+  File "/home/caiosouza/miniconda3/envs/llmastutor/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py", line 106, in _inner_fn
+    validate_repo_id(arg_value)
+  File "/home/caiosouza/miniconda3/envs/llmastutor/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py", line 154, in validate_repo_id
+    raise HFValidationError(
+huggingface_hub.errors.HFValidationError: Repo id must be in the form 'repo_name' or 'namespace/repo_name': '/home/caiosouza/TEXTOIR/models/scibert_scivocab_uncased'. Use `repo_type` argument if needed.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/caiosouza/miniconda3/envs/llmastutor/lib/python3.12/site-packages/transformers/tokenization_utils_base.py", line 1994, in from_pretrained
+    resolved_config_file = cached_file(
+                           ^^^^^^^^^^^^
+  File "/home/caiosouza/miniconda3/envs/llmastutor/lib/python3.12/site-packages/transformers/utils/hub.py", line 322, in cached_file
+    file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/caiosouza/miniconda3/envs/llmastutor/lib/python3.12/site-packages/transformers/utils/hub.py", line 532, in cached_files
+    _get_cache_file_to_return(path_or_repo_id, filename, cache_dir, revision, repo_type)
+  File "/home/caiosouza/miniconda3/envs/llmastutor/lib/python3.12/site-packages/transformers/utils/hub.py", line 143, in _get_cache_file_to_return
+    resolved_file = try_to_load_from_cache(
+                    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/caiosouza/miniconda3/envs/llmastutor/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py", line 106, in _inner_fn
+    validate_repo_id(arg_value)
+  File "/home/caiosouza/miniconda3/envs/llmastutor/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py", line 154, in validate_repo_id
+    raise HFValidationError(
+huggingface_hub.errors.HFValidationError: Repo id must be in the form 'repo_name' or 'namespace/repo_name': '/home/caiosouza/TEXTOIR/models/scibert_scivocab_uncased'. Use `repo_type` argument if needed.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/caiosouza/nlp/TEXTOIR/open_intent_discovery/run.py", line 161, in <module>
+    run(args, logger)
+  File "/home/caiosouza/nlp/TEXTOIR/open_intent_discovery/run.py", line 102, in run
+    data = DataManager(args)
+           ^^^^^^^^^^^^^^^^^
+  File "/home/caiosouza/nlp/TEXTOIR/open_intent_discovery/dataloaders/base.py", line 29, in __init__
+    self.dataloader = self.get_loader(args, self.get_attrs())
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/caiosouza/nlp/TEXTOIR/open_intent_discovery/dataloaders/base.py", line 40, in get_loader
+    dataloader = backbone_loader_map[args.backbone](args, attrs)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/caiosouza/nlp/TEXTOIR/open_intent_discovery/dataloaders/bert_loader.py", line 21, in __init__
+    self.tokenizer = BertTokenizer.from_pretrained(args.pretrained_bert_model, do_lower_case=True)    
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/caiosouza/miniconda3/envs/llmastutor/lib/python3.12/site-packages/transformers/tokenization_utils_base.py", line 2014, in from_pretrained
+    raise OSError(
+OSError: Can't load tokenizer for '/home/caiosouza/TEXTOIR/models/scibert_scivocab_uncased'. If you were trying to load it from 'https://huggingface.co/models', make sure you don't have a local directory with the same name. Otherwise, make sure '/home/caiosouza/TEXTOIR/models/scibert_scivocab_uncased' is the correct path to a directory containing all relevant files for a BertTokenizer tokenizer.

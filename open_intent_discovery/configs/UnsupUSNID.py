@@ -28,7 +28,7 @@ class Param():
         if args.dataset == 'banking':
             print("==============banking config")
             hyper_parameters = {
-                'pretrained_bert_model': '/home/caiomadeira/models/scibert_scivocab_uncased',
+                'pretrained_bert_model': '/home/caiosouza/nlp/models/scibert_scivocab_uncased',
                 'max_seq_length': None, 
                 'num_pretrain_epochs': 50,
                 'num_train_epochs': 20,
@@ -56,7 +56,7 @@ class Param():
         elif args.dataset == 'clinc':
             print("==============clinc config")
             hyper_parameters = {
-                'pretrained_bert_model': '/home/caiomadeira/models/scibert_scivocab_uncased',
+                'pretrained_bert_model': '/home/caiosouza/nlp/models/scibert_scivocab_uncased',
                 'max_seq_length': None, 
                 'num_pretrain_epochs': 1,
                 'num_train_epochs': 1,
@@ -85,7 +85,7 @@ class Param():
         elif args.dataset == 'stackoverflow':
             print("==============stackoverflow config")
             hyper_parameters = {
-                'pretrained_bert_model': '/home/caiomadeira/models/scibert_scivocab_uncased',
+                'pretrained_bert_model': '/home/caiosouza/nlp/models/scibert_scivocab_uncased',
                 'max_seq_length': None, 
                 'num_pretrain_epochs': 1,
                 'num_train_epochs': 1,
@@ -112,16 +112,17 @@ class Param():
             }
 
         elif args.dataset == 'aries':
-            print("==============aries config")
+            print("============== aries + react + scibert config")
+
             hyper_parameters = {
-                'pretrained_bert_model': '/home/caiosouza/TEXTOIR/models/scibert_scivocab_uncased',
+                'pretrained_bert_model': '/home/caiosouza/nlp/models/scibert_scivocab_uncased',
                 'max_seq_length': None, 
-                'num_pretrain_epochs': 100,
-                'num_train_epochs': 100,
-                'num_labels': None,
+                'num_pretrain_epochs': 20,
+                'num_train_epochs': 50,
+                'num_labels': 20, # verificar melhor o numero de labels e quem sabe estimar de alguma forma
                 'pretrain': True,
                 'freeze_pretrain_bert_parameters': True,
-                'freeze_train_bert_parameters': True,
+                'freeze_train_bert_parameters': False,
                 'feat_dim': 768,
                 'warmup_proportion': 0.1,
                 'lr_pre': 5e-5,
@@ -133,40 +134,43 @@ class Param():
                 'activation': 'tanh',
                 'tol': 0.0005,
                 'grad_clip': 1.0,
-                'train_batch_size': 128,
-                'pretrain_batch_size': 128,
+                'train_batch_size': 64,
+                'pretrain_batch_size': 64,
                 'eval_batch_size': 64,
                 'test_batch_size': 64,
-                'wait_patient': 10,
+                'wait_patient': 5,
             }
-        # elif args.dataset == 'aries':
-        #     print("==============aries TEST config")
-        #     hyper_parameters = {
-        #         'pretrained_bert_model': '/home/caiosouza/TEXTOIR/models/scibert_scivocab_uncased',
-        #         'max_seq_length': None, 
-        #         'num_pretrain_epochs': 1,
-        #         'num_train_epochs': 1,
-        #         'num_labels': None,
-        #         'pretrain': True,
-        #         'freeze_pretrain_bert_parameters': True,
-        #         'freeze_train_bert_parameters': True,
-        #         'feat_dim': 768,
-        #         'warmup_proportion': 0.1,
-        #         'lr_pre': 5e-5,
-        #         'lr': 2e-5,
-        #         'loss_fct': 'CrossEntropyLoss',
-        #         'pretrain_temperature': 0.07,
-        #         'train_temperature': 0.07,
-        #         're_prob': 0.5,
-        #         'activation': 'tanh',
-        #         'tol': 0.0005,
-        #         'grad_clip': 1.0,
-        #         'train_batch_size': 128,
-        #         'pretrain_batch_size': 128,
-        #         'eval_batch_size': 64,
-        #         'test_batch_size': 64,
-        #         'wait_patient': 1,
-        #     }
+        
+        elif args.dataset == 'aries_specter2':
+            print("============== aries + react + specter2 config")
+            hyper_parameters = {
+                'pretrained_bert_model': '/home/caiosouza/nlp/models/specter2_base',
+                'max_seq_length': None, 
+                'num_pretrain_epochs': 20,
+                'num_train_epochs': 50,
+                'num_labels': 20, # verificar melhor o numero de labels e quem sabe estimar de alguma forma
+                'pretrain': True,
+                'freeze_pretrain_bert_parameters': True,
+                'freeze_train_bert_parameters': False,
+                'feat_dim': 768,
+                'warmup_proportion': 0.1,
+                'lr_pre': 5e-5,
+                'lr': 2e-5,
+                'loss_fct': 'CrossEntropyLoss',
+                'pretrain_temperature': 0.07,
+                'train_temperature': 0.07,
+                're_prob': 0.5,
+                'activation': 'tanh',
+                'tol': 0.0005,
+                'grad_clip': 1.0,
+                'train_batch_size': 64,
+                'pretrain_batch_size': 64,
+                'eval_batch_size': 64,
+                'test_batch_size': 64,
+                'wait_patient': 5,
+            }
+
+
 
         return hyper_parameters
 
