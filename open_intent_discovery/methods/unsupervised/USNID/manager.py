@@ -18,6 +18,16 @@ from utils.metrics import clustering_score
 from utils.functions import set_seed, view_generator
 from losses import loss_map
 from .pretrain import PretrainUnsupUSNIDManager
+import pandas as pd
+
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+import matplotlib
+
+import csv
+import seaborn as sns
+
+matplotlib.use('Agg')
 
 class UnsupUSNIDManager:
     
@@ -35,27 +45,33 @@ class UnsupUSNIDManager:
         self.train_outputs = loader.train_outputs
         self.criterion = loss_map['CrossEntropyLoss']
         self.contrast_criterion = loss_map['SupConLoss']
-        self.tokenizer = BertTokenizer.from_pretrained(args.pretrained_bert_model, do_lower_case=True)    
+        self.tokenizer = BertTokenizer.from_pretrained(args.pretrained_bert_model, do_lower_case=True)        
+        new_tokens = ["[FIG]", "[TAB]", "[SEC]", "[EQ]", "[REF]", "[TECH]"]
+        self.tokenizer.add_special_tokens({'additional_special_tokens': new_tokens})
         self.generator = view_generator(self.tokenizer, args)
         
         if args.pretrain:
             self.pretrained_model = pretrain_manager.model
-            
             self.set_model_optimizer(args, data, model, pretrain_manager)
+            self.model.resize_token_embeddings(len(self.tokenizer)) 
             self.load_pretrained_model(args, self.pretrained_model)
             
         else:
             self.pretrained_model = restore_model(pretrain_manager.model, os.path.join(args.method_output_dir, 'pretrain'))   
             self.set_model_optimizer(args, data, model, pretrain_manager)
+
+            self.model.resize_token_embeddings(len(self.tokenizer)) 
+            self.load_pretrained_model(args, self.pretrained_model)
             
-            if args.train:
-                self.load_pretrained_model(args, self.pretrained_model)
-            else:
-                self.model = restore_model(self.model, args.model_output_dir)   
+            if not args.train:
+                self.model = restore_model(self.model, args.model_output_dir)
     
     def set_model_optimizer(self, args, data, model, pretrain_manager):
         
-        args.num_labels = self.num_labels = data.num_labels
+        # args.num_labels = self.num_labels = data.num_labels
+        self.num_labels = pretrain_manager.num_labels
+        args.num_labels = self.num_labels
+        self.logger.info(f"main training initialized with={self.num_labels}")
         self.model = model.set_model(args, data, 'bert', args.freeze_train_bert_parameters)     
         self.optimizer , self.scheduler = model.set_optimizer(self.model, data.dataloader.num_train_examples, args.train_batch_size, \
             args.num_train_epochs, args.lr, args.warmup_proportion)
@@ -66,6 +82,9 @@ class UnsupUSNIDManager:
         
         outputs = self.get_outputs(args, mode = 'train', model = self.model)
         feats = outputs['feats']
+        self.logger.info("adding in clustering function l2 normalization of feats.")
+        from sklearn.preprocessing import normalize
+        feats = normalize(feats, norm='l2')
         y_true = outputs['y_true']
         
         if init == 'k-means++':
@@ -80,7 +99,7 @@ class UnsupUSNIDManager:
         elif init == 'centers':
             
             start = time.time()
-            km = KMeans(n_clusters = self.num_labels, n_jobs = -1, random_state=args.seed, init = self.centroids).fit(feats)
+            km = KMeans(n_clusters = self.num_labels, random_state=args.seed, init = self.centroids).fit(feats)
             km_centroids, assign_labels = km.cluster_centers_, km.labels_ 
             end = time.time()
             self.logger.info('K-means used %s s', round(end - start, 2))
@@ -92,6 +111,11 @@ class UnsupUSNIDManager:
                       
     def train(self, args, data): 
 
+        log_file_path = os.path.join(args.output_dir, 'training_metrics.csv')
+        with open(log_file_path, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['epoch', 'total_loss', 'delta_label', 'num_active_clusters', 'entropy', 'lr'])
+
         self.centroids = None
         last_preds = None
         
@@ -100,13 +124,50 @@ class UnsupUSNIDManager:
             init_mechanism = 'k-means++' if epoch == 0 else 'centers'
             
             outputs, km_centroids, y_true, assign_labels, pseudo_labels = self.clustering(args, init = init_mechanism)
-
+            current_feats = outputs['feats']
             current_preds = pseudo_labels.numpy()
             delta_label = np.sum(current_preds != last_preds).astype(np.float32) / current_preds.shape[0] 
             last_preds = np.copy(current_preds)
-            
+
+            unique_labels, counts = np.unique(current_preds, return_counts=True)
+            num_active_clusters = len(unique_labels)
+
+            probs = counts / len(current_preds)
+            # se a entropia for 0, todos osdados estao em um cluster so.
+            # o calculo da entropia serve pra medir o quao espaços os dados estao
+            entropy = -np.sum(probs * np.log(probs + 1e-10))
+            self.logger.info(F"TRAIN - ENTROPY={entropy}")
+            if epoch % 1 == 0: 
+                try:
+                    self.logger.info(f"Gerando t-SNE para época {epoch}...")
+                    
+                    n_samples = len(current_feats)
+                    max_pts = min(n_samples, 5000)
+                    
+                    rng = np.random.default_rng(args.seed + epoch)
+                    idx = rng.choice(n_samples, max_pts, replace=False)
+                    
+                    sample_feats = np.ascontiguousarray(current_feats[idx])
+                    sample_labels = np.ascontiguousarray(assign_labels[idx])
+                    
+                    self.plot_tsne_epoch(args, sample_feats, sample_labels, epoch)
+                    
+                except Exception as e:
+                    self.logger.warning(f"AVISO: t-SNE falhou na época {epoch}: {e}. O treino continua...")
+            # --------------------------------------------
+            # --------------------------------------------
+
+            if epoch % 5 == 0:
+                plt.figure(figsize=(10, 4))
+                plt.bar(unique_labels, counts, color='skyblue', edgecolor='black')
+                plt.xlabel('Cluster ID')
+                plt.ylabel('Reviews count')
+                plt.title(f'Clusters distribution - Epoch {epoch}\n(active: {num_active_clusters}/{self.num_labels}, entropy: {entropy:.2f})')
+                plt.grid(axis='y', alpha=0.3)
+                plt.savefig(os.path.join(args.output_dir, f'dist_epoch_{epoch}.png'))
+                plt.close()
+
             if epoch > 0:
-                
                 self.logger.info("***** Epoch: %s *****", str(epoch))
                 self.logger.info('Training Loss: %f', np.round(tr_loss, 5))
                 self.logger.info('Delta Label: %f', delta_label)
@@ -162,6 +223,11 @@ class UnsupUSNIDManager:
                     self.scheduler.step()
                 
             tr_loss = tr_loss / nb_tr_steps
+            current_lr = self.optimizer.param_groups[0]['lr'] # peguei o leanring rate atual
+            
+            with open(log_file_path, 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([epoch, tr_loss, delta_label, num_active_clusters, entropy, current_lr])
                 
         if args.save_model:
             save_model(self.model, args.model_output_dir)
@@ -172,10 +238,53 @@ class UnsupUSNIDManager:
         feats = outputs['feats']
         y_true = outputs['y_true']
 
-        km = KMeans(n_clusters = self.num_labels, n_jobs = -1, random_state=args.seed, init = self.centroids).fit(feats) 
-       
+        km = KMeans(n_clusters = self.num_labels, random_state=args.seed, init = self.centroids).fit(feats)
         y_pred = km.labels_
-        
+
+        # self.logger.info("t-sne plot")
+        # try:
+        #     self.plot_tsne(args, feats, y_pred)
+        #     self.logger.info("t-sne succesful saved.")
+        # except Exception as e:
+        #     self.logger.error(f"error: {e}")
+        # self.logger.info("generating t-sne")
+        # try:
+        #     if len(np.unique(y_pred)) > 1:
+        #         self.plot_tsne(args, feats, y_pred)
+        #         self.logger.info(f"t-SNE salved {args.output_dir}")
+        #     else:
+        #         self.logger.warning("t-SNE skipped just 1 cluster detected.")
+        # except Exception as e:
+        #     self.logger.error(f"Erro t-SNE: {e}")
+
+        model_to_save = self.model.module if hasattr(self.model, 'module') else self.model
+        output_model_file = os.path.join(args.output_dir, "pytorch_model.bin") 
+        torch.save(model_to_save.state_dict(), output_model_file)
+        self.logger.info(f"model saved {output_model_file}")
+
+        try:
+            loader = data.dataloader 
+            texts = [ex.text_a for ex in loader.test_examples]
+            
+            df_out = pd.DataFrame({
+               'text': texts[:len(y_pred)],
+                'cluster': y_pred,
+                'silhouette': s_samples,
+                'label_dummy': y_true 
+            })
+            
+            output_csv_file = os.path.join(args.output_dir, "cluster_predictions.tsv")
+            df_out.to_csv(output_csv_file, sep='\t', index=False)
+            self.logger.info(f"PREDIÇÕES SALVAS COM SUCESSO: {output_csv_file}")
+            for label in np.unique(y_pred):
+                c_df = df_out[df_out['cluster'] == label]
+                self.logger.info(f"Cluster {label:02d} | Size: {len(c_df):5d} | Silhouette: {c_df['silhouette'].mean():.4f}")
+            
+        except Exception as e:
+            self.logger.error(f"ERRO CRÍTICO AO SALVAR CSV: {e}")
+            self.logger.info(f"DEBUG - Atributos de data: {dir(data)}")
+            np.savetxt(os.path.join(args.output_dir, "cluster_ids.txt"), y_pred, fmt='%d')
+
         test_results = clustering_score(y_true, y_pred)
         cm = confusion_matrix(y_true, y_pred)
         
@@ -190,7 +299,55 @@ class UnsupUSNIDManager:
         test_results['y_true'] = y_true
         test_results['y_pred'] = y_pred
 
+        from sklearn.metrics import silhouette_samples
+        s_samples = silhouette_samples(feats, y_pred)
+        unique_labels = np.unique(y_pred)
+
+        self.logger.info("***** Final Cluster Semantic Analysis *****")
+        cluster_stats = []
+        for label in unique_labels:
+            c_scores = s_samples[y_pred == label]
+            c_mean = np.mean(c_scores)
+            c_size = len(c_scores)
+            cluster_stats.append({'id': label, 'mean': c_mean, 'size': c_size})
+            self.logger.info(f"Cluster {label:02d} | Size: {c_size:5d} | Silhouette: {c_mean:.4f}")
+
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x=[c['id'] for c in cluster_stats], y=[c['mean'] for c in cluster_stats])
+        plt.axhline(0.01, color='red', linestyle='--')
+        plt.title("Mean Silhouette Score per Cluster")
+        plt.savefig(os.path.join(args.output_dir, "final_silhouette_stats.png"))
+
+        from sklearn.metrics import silhouette_score
+        s_score = silhouette_score(feats, y_pred)
+        with open(os.path.join(args.output_dir, "optuna_score.txt"), "w") as f:
+                f.write(str(s_score))
         return test_results
+    
+    def plot_tsne(self, args, feats, labels):
+        tsne = TSNE(n_components=1, perplexity=30, random_state=args.seed, max_iter=1000, n_jobs=4)
+        embeddings_2d = tsne.fit_transform(feats)
+        plt.figure(figsize=(16, 12))
+        unique_labels = np.unique(labels)
+        cmap = plt.get_cmap('tab20') if len(unique_labels) <= 20 else plt.get_cmap('nipy_spectral')
+
+        scatter = plt.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c=labels,
+                              cmap=cmap, alpha=0.7, s=20, edgecolors='k', linewidths=0.1)
+        
+        plt.colorbar(scatter, ticks=unique_labels, label='cluster ID')
+        plt.title(f'Cluster Visualization (t-SNE) - {args.dataset}\nMethod: {args.method} - Clusters: {len(unique_labels)}')
+        plt.xlabel('Dim 1')
+        plt.ylabel('Dim 2')
+        plt.grid(True, linestyle='--', alpha=0.3)
+
+        file_name = f"tsne_{args.dataset}_{args.method}_seed{args.seed}.png"
+        output_path = os.path.join(args.output_dir, file_name)
+        
+        if not os.path.exists(args.output_dir):
+            os.makedirs(args.output_dir)
+            
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.close()
 
     def get_outputs(self, args, mode, model):
         
@@ -274,3 +431,28 @@ class UnsupUSNIDManager:
         train_dataloader = DataLoader(train_data, sampler = sampler, batch_size = args.train_batch_size)
 
         return train_dataloader
+    
+    def plot_tsne_epoch(self, args, feats, labels, epoch):
+        # n_jobs=-1 usa todos os núcleos e acelera o t-SNE
+        tsne = TSNE(n_components=2, perplexity=30, random_state=args.seed, max_iter=1000, n_jobs=-1)
+        embeddings_2d = tsne.fit_transform(feats)
+        
+        plt.figure(figsize=(12, 10))
+        unique_labels = np.unique(labels)
+        
+        if len(unique_labels) <= 20:
+            cmap = plt.get_cmap('tab20')
+        else:
+            cmap = plt.get_cmap('nipy_spectral')
+
+        plt.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], 
+                    c=labels, cmap=cmap, alpha=0.5, s=10, edgecolors='none')
+        
+        plt.title(f'Embedding Separation Evolution - Epoch {epoch}\nClusters detectados: {len(unique_labels)}')
+        plt.xlabel('t-SNE dimension 1')
+        plt.ylabel('t-SNE dimension 2')
+        
+        output_path = os.path.join(args.output_dir, f"tsne_epoch_{epoch}.png")
+        plt.savefig(output_path, dpi=200, bbox_inches='tight')
+        plt.clf() 
+        plt.close() 

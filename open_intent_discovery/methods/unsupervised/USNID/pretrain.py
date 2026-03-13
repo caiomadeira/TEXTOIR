@@ -25,7 +25,12 @@ class PretrainUnsupUSNIDManager:
         self.train_outputs = loader.train_outputs
         self.contrast_criterion = loss_map['SupConLoss']
 
-        self.tokenizer = BertTokenizer.from_pretrained(args.pretrained_bert_model, do_lower_case=True)    
+        self.tokenizer = BertTokenizer.from_pretrained(args.pretrained_bert_model, do_lower_case=True)
+        new_tokens = ["[FIG]", "[TAB]", "[SEC]", "[EQ]", "[REF]", "[TECH]"]
+        num_added_toks = self.tokenizer.add_special_tokens({'additional_special_tokens': new_tokens})
+        self.logger.info(f"Added {num_added_toks} special tokens to the vocabulary.")
+        self.model.resize_token_embeddings(len(self.tokenizer))
+
         self.generator = view_generator(self.tokenizer, args)
 
         if args.pretrain:
@@ -39,19 +44,110 @@ class PretrainUnsupUSNIDManager:
 
         if args.cluster_num_factor > 1:
             self.num_labels = data.num_labels
-            self.num_labels = self.predict_k(args, data) 
+            self.num_labels = self.predict_k_hybrid(args, data)
+            self.logger.info(f"final K estimate dand defined for train= {self.num_labels}")
             
         self.model.to(torch.device('cpu'))
         torch.cuda.empty_cache()
 
-    def predict_k(self, args, data):
+    def predict_k_hybrid(self, args, data):
+        from sklearn.metrics import silhouette_samples, silhouette_score
+        self.logger.info("Starting hybrid K estimation (Search + Silhouette Pruning).")
         
+        feats = self.get_outputs(args, self.model)
+        from sklearn.preprocessing import normalize
+        feats = normalize(feats, norm='l2')
+
+        k_min = max(2, int(data.num_labels * 0.5)) 
+        k_max = int(data.num_labels * 2.0)
+        
+        best_final_k = 0
+        best_global_score = -1.0
+        
+        tau = 0.02   
+        gamma = 0.001 #significance (0.1%)
+
+        for k_initial in tqdm(range(k_min, k_max + 1, 5), desc="Searching best initial K"):
+            km = KMeans(n_clusters=k_initial, init='k-means++', n_init=10, random_state=args.seed).fit(feats)
+            y_pred = km.labels_
+            
+            s_samples = silhouette_samples(feats, y_pred, metric='cosine')
+            pred_label_list = np.unique(y_pred)
+            
+            # sum V(Cj)
+            valid_clusters = 0
+            for label in pred_label_list:
+                cluster_data = s_samples[y_pred == label]
+                cluster_mean = np.mean(cluster_data)
+                cluster_size = len(cluster_data)
+                
+                # (V_Cj)
+                if cluster_mean > tau and (cluster_size / len(feats)) > gamma:
+                    valid_clusters += 1
+            
+            k_final = valid_clusters # sum V(Cj)
+
+            current_global_score = silhouette_score(feats, y_pred)
+            if 20 <= k_final <= 100:
+                #if current_global_score > best_global_score:
+                if k_final >= best_final_k and current_global_score > 0.025:
+                    best_global_score = current_global_score
+                    best_final_k = k_final
+            
+            self.logger.info(f"K_init={k_initial} -> K_final={k_final} (valid) | Silhouette={current_global_score:.4f} | best_global_score={best_global_score:.4f}")
+
+        if best_final_k == 0:
+            best_final_k = 40 
+            self.logger.warning("Search failed to find optimal K in range [20, 80]. Using fallback K=40.")
+
+        self.logger.info(f"Hybrid estimation finished. Best K: {best_final_k}")
+        return best_final_k
+
+    def predict_k_with_silhouette(self, args, data):
+        from sklearn.metrics import silhouette_samples
+        self.logger.info("starting k estimation by silhoette score.")
+        
+        # passa todo o dataset pelo scibert (no eval) e pega os embeddings de cada review.
+        # seja W uma matrix. W de tamanho [samples, 768d]
+        feats = self.get_outputs(args, self.model)
+        """
+        Rodo o k-means com o meu chute inicial la no config (num_label) ps: o cluster_factor sendo
+        maior que 1. Assim, ele atribui os reviews a cada um dos X grupos iniciais (X = num_label * cluster_factor)
+        """
+        km = KMeans(n_clusters = data.num_labels).fit(feats)
+        y_pred = km.labels_ # y_preds = labels
+        pred_label_list = np.unique(y_pred)
+        print("==="*20)
+        print("lista contendo os ids de clusters que de fato receberam algo:", len(pred_label_list))
+        for i in range(0, len(pred_label_list) - 1):
+            print("pred_list_label[i]=", pred_label_list[i])
+        print("==="*20)
+        """
+        onde no originl era a heuristica do calculo da densidade media esperada (total reviews / num_clusters)
+        agr eh o silhoette mean. o silouete smaple me da o coeficiente de cada documento, o silhouettre_score eh global.
+        """
+        s_score = silhouette_samples(feats, y_pred)
+        count = 0
+        for label in pred_label_list:
+            cluster_scores = s_score[y_pred == label] # aki to pegando scores apenas dos reviews que pertencem a este cluster >label
+            cluster_mean = np.mean(cluster_scores) # calculando a media de silhouette deste cluster em especifico
+            if cluster_mean < 0.1:
+                count +=1
+        num_labels = len(pred_label_list) - count
+        return num_labels
+        
+    """
+    Essa função não usa silhouette e sim a densidade média. original do usnid
+    """
+    def predict_k(self, args, data):
+        self.logger.info("densidade media predict_k")
         feats = self.get_outputs(args, self.model)
         km = KMeans(n_clusters = data.num_labels).fit(feats)
         y_pred = km.labels_
 
         pred_label_list = np.unique(y_pred)
         drop_out = len(feats) / data.num_labels
+        print("Dropout value=", drop_out)
         print('drop',drop_out)
 
         cnt = 0
@@ -87,8 +183,12 @@ class PretrainUnsupUSNIDManager:
 
     def set_model_optimizer(self, args, data, model):
         
-        self.model = model.set_model(args, data, 'bert', args.freeze_pretrain_bert_parameters)   
-        self.optimizer , self.scheduler = model.set_optimizer(self.model, data.dataloader.num_train_examples, args.pretrain_batch_size, \
+        self.model = model.set_model(args, data, 'bert', args.freeze_pretrain_bert_parameters)
+        if hasattr(data.dataloader, 'train_unlabeled_examples'):
+            num_examples = len(data.dataloader.train_unlabeled_examples)
+        else:
+            num_examples = len(data.dataloader.train_examples)
+        self.optimizer , self.scheduler = model.set_optimizer(self.model, num_examples, args.pretrain_batch_size, \
             args.num_train_epochs, args.lr_pre, args.warmup_proportion)
         
         self.device = model.device
@@ -127,8 +227,11 @@ class PretrainUnsupUSNIDManager:
                     loss = loss_contrast
                     
                     if args.grad_clip != -1.0:
-                        torch.nn.utils.clip_grad_value_([param for param in self.model.parameters() if param.requires_grad], args.grad_clip)
-
+                        # torch.nn.utils.clip_grad_value_([param for param in self.model.parameters() if param.requires_grad], args.grad_clip)
+                        grads = [param for param in self.model.parameters() if param.requires_grad and param.grad is not None]
+                        if len(grads) > 0:
+                            torch.nn.utils.clip_grad_value_(grads, args.grad_clip)
+                            
                     self.optimizer.zero_grad()
                     loss.backward()
                     tr_loss += loss.item()
