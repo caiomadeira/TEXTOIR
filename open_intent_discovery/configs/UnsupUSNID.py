@@ -111,11 +111,12 @@ class Param():
                 'wait_patient': 1,
             }
 
-        elif args.dataset == 'aries':
-            print("============== aries + react + scibert config")
+        elif args.dataset == 'aries_high_masked' or args.dataset == 'aries_low_masked':
+            print("dataset: ", args.dataset)
 
             hyper_parameters = {
-                'pretrained_bert_model': '/home/caiosouza/nlp/models/scibert_scivocab_uncased',
+                #'pretrained_bert_model': '/home/caiosouza/nlp/models/scibert_scivocab_uncased',
+                'pretrained_bert_model': args.model_path,
                 'max_seq_length': None, 
                 'num_pretrain_epochs': 100,
                 'num_train_epochs': 100,

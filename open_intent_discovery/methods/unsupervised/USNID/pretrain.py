@@ -44,7 +44,11 @@ class PretrainUnsupUSNIDManager:
 
         if args.cluster_num_factor > 1:
             self.num_labels = data.num_labels
-            self.num_labels = self.predict_k_hybrid(args, data)
+            # self.num_labels = self.predict_k_hybrid(args, data)
+            if args.predict_k == "density_usnid":
+                self.num_labels = self.predict_k(args, data)
+            elif args.predict_k == "silhouette_based":
+                self.num_labels = self.predict_k_hybrid(args, data)
             self.logger.info(f"final K estimate dand defined for train= {self.num_labels}")
             
         self.model.to(torch.device('cpu'))

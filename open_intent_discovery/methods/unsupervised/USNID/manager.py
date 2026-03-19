@@ -269,21 +269,15 @@ class UnsupUSNIDManager:
             df_out = pd.DataFrame({
                'text': texts[:len(y_pred)],
                 'cluster': y_pred,
-                'silhouette': s_samples,
                 'label_dummy': y_true 
             })
             
             output_csv_file = os.path.join(args.output_dir, "cluster_predictions.tsv")
             df_out.to_csv(output_csv_file, sep='\t', index=False)
             self.logger.info(f"PREDIÇÕES SALVAS COM SUCESSO: {output_csv_file}")
-            for label in np.unique(y_pred):
-                c_df = df_out[df_out['cluster'] == label]
-                self.logger.info(f"Cluster {label:02d} | Size: {len(c_df):5d} | Silhouette: {c_df['silhouette'].mean():.4f}")
             
         except Exception as e:
             self.logger.error(f"ERRO CRÍTICO AO SALVAR CSV: {e}")
-            self.logger.info(f"DEBUG - Atributos de data: {dir(data)}")
-            np.savetxt(os.path.join(args.output_dir, "cluster_ids.txt"), y_pred, fmt='%d')
 
         test_results = clustering_score(y_true, y_pred)
         cm = confusion_matrix(y_true, y_pred)

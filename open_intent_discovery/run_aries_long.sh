@@ -18,7 +18,7 @@ mkdir -p logs
 if [[ "$1" == "scibert" ]]; then
     echo "Iniciando treinamento com SCIBERT..."
     for cluster_num_factor in 2.0 3.0
-    do 
+    do
         for seed in 0 1 2
         do
             python -u run.py \
@@ -33,7 +33,7 @@ if [[ "$1" == "scibert" ]]; then
             --gpu_id 0 \
             --save_model \
             --save_results \
-            --output_dir "./outputs/unsup_scibert_factor_${cluster_num_factor}_seed_${seed}/"
+            --output_dir "./outputs/scibert_F${cluster_num_factor}_S${seed}/"
         done
     done
 

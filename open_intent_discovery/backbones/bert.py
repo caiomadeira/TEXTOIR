@@ -305,7 +305,7 @@ class BERT_USNID(BertPreTrainedModel):
             else:
                 return mlp_outputs, mlp_outputs
             
-class BERT_USNID_UNSUP(BertPreTrainedModel):
+class (BertPreTrainedModel):
     
     def __init__(self, config, args):
 
@@ -326,7 +326,11 @@ class BERT_USNID_UNSUP(BertPreTrainedModel):
                 feature_ext = False, mode = None, loss_fct = None, aug_feats=None, use_aug = False):
 
         outputs = self.bert(
-            input_ids, token_type_ids=token_type_ids, attention_mask=attention_mask, output_hidden_states=True)
+            input_ids, 
+            token_type_ids=token_type_ids, 
+            attention_mask=attention_mask, 
+            output_hidden_states=True)
+
 
         encoded_layer_12 = outputs.hidden_states
         last_output_tokens = encoded_layer_12[-1]     
@@ -585,3 +589,33 @@ class BertForMCL(BertPreTrainedModel):
             
         else:
             return pooled_output, logits
+
+class SBERT_USNID(BertPreTrainedModel):
+    def __init__(self, config, args):
+        super(SBERT_USNID, self).__init__(config)
+        self.bert = BertModel(config) # Aqui ele carrega os pesos do BGE/SBERT
+        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
+        self.activation = activation_map[args.activation]
+        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        
+        # Heads de classificação/clusterização do USNID
+        self.classifier = nn.Linear(config.hidden_size, args.num_labels)
+        self.mlp_head = nn.Linear(config.hidden_size, args.num_labels)
+        self.init_weights()
+
+    def forward(self, input_ids=None, token_type_ids=token_type_ids, attention_mask=None, feature_ext=False):
+        outputs = self.bert(input_ids, attention_mask=attention_mask, output_hidden_states=True)
+        
+        # POOLING ESTRATÉGICO: 
+        # Se for BGE, usamos CLS ([0]). Se for SBERT antigo, usamos Mean.
+        # Vamos de CLS para garantir a "estabilidade" da Luxburg no BGE:
+        features = outputs.last_hidden_state[:, 0, :] 
+            
+        features = self.dense(features)
+        pooled_output = self.activation(features)   
+        pooled_output = self.dropout(pooled_output)
+        
+        logits = self.classifier(pooled_output)
+        mlp_outputs = self.mlp_head(pooled_output)
+        
+        return (features, logits) if feature_ext else (mlp_outputs, logits)

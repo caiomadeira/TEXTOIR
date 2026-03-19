@@ -1,6 +1,6 @@
 from .bert import BertForConstrainClustering, BertForDTC, BertForKCL_Similarity, \
     BertForKCL, BertForMCL, BERT_MTP_Pretrain, BERT_MTP, Bert_SCCL, BERT_GCD, BERT_CC, BERTForDeepAligned, \
-        BERT_USNID, BERT_USNID_UNSUP
+        BERT_USNID, BERT_USNID_UNSUP, SBERT_USNID
 from .glove import GloVeEmbeddingVectorizer
 from .sae import get_stacked_autoencoder
 
@@ -19,5 +19,6 @@ backbones_map = {   'bert': BERT_USNID_UNSUP, # some errors related here: KeyErr
                     'bert_SCCL' : Bert_SCCL,
                     'bert_GCD' : BERT_GCD,
                     'bert_CC' : BERT_CC,
-                    'bert_DeepAligned' : BERTForDeepAligned
+                    'bert_DeepAligned' : BERTForDeepAligned,
+                    'sbert': SBERT_USNID
                 }

@@ -65,6 +65,9 @@ def parse_arguments():
 
     parser.add_argument("--save_results", action="store_true", help="save final results for open intent detection")
 
+    parser.add_argument("--model_path", type=str, default="/home/caiosouza/nlp/models/scibert_scivocab_uncased")
+    parser.add_argument("--predict_k", type=str, default="density_usnid")
+
     args = parser.parse_args()
 
     return args
