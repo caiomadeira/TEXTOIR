@@ -305,7 +305,7 @@ class BERT_USNID(BertPreTrainedModel):
             else:
                 return mlp_outputs, mlp_outputs
             
-class (BertPreTrainedModel):
+class BERT_USNID_UNSUP(BertPreTrainedModel):
     
     def __init__(self, config, args):
 
