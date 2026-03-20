@@ -593,22 +593,20 @@ class BertForMCL(BertPreTrainedModel):
 class SBERT_USNID(BertPreTrainedModel):
     def __init__(self, config, args):
         super(SBERT_USNID, self).__init__(config)
-        self.bert = BertModel(config) # Aqui ele carrega os pesos do BGE/SBERT
+        self.bert = BertModel(config)  # pode da merda
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.activation = activation_map[args.activation]
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         
-        # Heads de classificação/clusterização do USNID
+        # heads d classfic
         self.classifier = nn.Linear(config.hidden_size, args.num_labels)
         self.mlp_head = nn.Linear(config.hidden_size, args.num_labels)
         self.init_weights()
 
-    def forward(self, input_ids=None, token_type_ids=token_type_ids, attention_mask=None, feature_ext=False):
+    def forward(self, input_ids=None, token_type_ids=None, attention_mask=None, feature_ext=False):
         outputs = self.bert(input_ids, attention_mask=attention_mask, output_hidden_states=True)
         
-        # POOLING ESTRATÉGICO: 
-        # Se for BGE, usamos CLS ([0]). Se for SBERT antigo, usamos Mean.
-        # Vamos de CLS para garantir a "estabilidade" da Luxburg no BGE:
+        #  CLS ([0])
         features = outputs.last_hidden_state[:, 0, :] 
             
         features = self.dense(features)

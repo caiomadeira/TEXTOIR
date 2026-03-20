@@ -7,7 +7,9 @@ max_seq_lengths = {     'stackoverflow':45,
                         'clinc':30, 
                         'banking':55, 
                         'snips': 35,
-                        'aries':128
+                        'aries':128,
+                        'aries_high_masked':128,
+                        'aries_low_masked': 128 # optei por 128 pra fica rmais seguro. existem reviews curtos e longos
                     }
                     
 backbone_loader_map = {
@@ -94,5 +96,7 @@ benchmark_labels = {
                     "SearchCreativeWork", "SearchScreeningEvent"
                 ],
 
-    'aries': [str(i) for i in range(ARIES_ESTIMATE_K_RANGE)]
+    'aries': [str(i) for i in range(ARIES_ESTIMATE_K_RANGE)],
+    'aries_high_masked': [str(i) for i in range(ARIES_ESTIMATE_K_RANGE)],
+    'aries_low_masked': [str(i) for i in range(ARIES_ESTIMATE_K_RANGE)]
 }

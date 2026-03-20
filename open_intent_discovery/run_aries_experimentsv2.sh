@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=usnid     
-#SBATCH --time=5-0         
+#SBATCH --time=7-0         
 #SBATCH --gpus=1                   
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G                  
