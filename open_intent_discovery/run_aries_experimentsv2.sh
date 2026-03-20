@@ -22,9 +22,9 @@ if [[ "$1" == "scibert" ]]; then
     do
         for dataset in 'aries_high_masked'
         do
-            for cluster_num_factor in 2.0 3.0 4.0
+            for cluster_num_factor in 1.0 2.0 3.0
             do
-                for seed in 0 1 2 3
+                for seed in 0 1 2 
                 do
                     python -u run.py \
                     --predict_k $predict_k \
@@ -49,16 +49,14 @@ if [[ "$1" == "scibert" ]]; then
 
 elif [[ "$1" == "specter2" ]]; then
         echo "Iniciando treinamento com SPECTER2..."
-        for predict_k in 'density_usnid' 'silhouette_based'
-        do
             for dataset in 'aries_high_masked'
             do
-                for cluster_num_factor in 2.0 3.0 4.0
+                for cluster_num_factor in 1.0 2.0 3.0
                 do
-                    for seed in 0 1 2 3
+                    for seed in 0 1 2
                     do
                         python -u run.py \
-                        --predict_k $predict_k \
+                        --predict_k 'density_usnid' \
                         --dataset $dataset \
                         --method UnsupUSNID \
                         --setting unsupervised \
@@ -72,25 +70,20 @@ elif [[ "$1" == "specter2" ]]; then
                         --save_model \
                         --save_results \
                         --model_path "/home/caiosouza/nlp/models/specter2_base" \
-                        --output_dir "./outputs/specter2_F${cluster_num_factor}_S${seed}_dt${dataset}_kpred${predict_k}/"
+                        --output_dir "./outputs/specter2_F${cluster_num_factor}_S${seed}/"
                     done
                 done
             done
-        done
 # "BAAI/bge-base-en-v1.5" experimental. Talvez quebre por ser um sbert. 
 elif [[ "$1" == "bge" ]]; then
         echo "Iniciando treinamento com BGE-(SBERT)..."
-        for predict_k in 'density_usnid' 'silhouette_based'
-        do
-            for dataset in 'aries_high_masked'
-            do
-                for cluster_num_factor in 2.0 3.0 4.0
+                for cluster_num_factor in 1.0 2.0 3.0
                 do
-                    for seed in 0 1 2 3
+                    for seed in 0 1 2
                     do
                         python -u run.py \
-                        --predict_k $predict_k \
-                        --dataset $dataset \
+                        --predict_k 'density_usnid' \
+                        --dataset 'aries_high_masked' \
                         --method UnsupUSNID \
                         --setting unsupervised \
                         --known_cls_ratio 0 \
@@ -103,11 +96,9 @@ elif [[ "$1" == "bge" ]]; then
                         --save_model \
                         --save_results \
                         --model_path "/home/caiosouza/nlp/models/bge-base-en-v1.5" \
-                        --output_dir "./outputs/bge_F${cluster_num_factor}_S${seed}_dt${dataset}_kpred${predict_k}/"
+                        --output_dir "./outputs/bge_F${cluster_num_factor}_S${seed}/"
                     done
-                done
             done
-        done
 else
     echo "ERRO: Modelo inválido ou nenhum parâmetro passado."
     echo "Uso correto: ./run_aries.sh scibert ou bge ou specter2"

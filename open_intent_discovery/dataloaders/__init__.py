@@ -1,7 +1,7 @@
 from .bert_loader import BERT_Loader
 from .unsup_loader import UNSUP_Loader
 
-ARIES_ESTIMATE_K_RANGE = 20
+ARIES_ESTIMATE_K_RANGE = 100
 
 max_seq_lengths = {     'stackoverflow':45,
                         'clinc':30, 

@@ -120,7 +120,7 @@ class Param():
                 'max_seq_length': None, 
                 'num_pretrain_epochs': 100,
                 'num_train_epochs': 100,
-                'num_labels': None, # verificar melhor o numero de labels e quem sabe estimar de alguma forma
+                'num_labels': 100, # verificar melhor o numero de labels e quem sabe estimar de alguma forma
                 'pretrain': True,
                 'freeze_pretrain_bert_parameters': True,
                 'freeze_train_bert_parameters': False,
