@@ -117,7 +117,7 @@ class Param():
             hyper_parameters = {
                 #'pretrained_bert_model': '/home/caiosouza/nlp/models/scibert_scivocab_uncased',
                 'pretrained_bert_model': args.model_path,
-                'max_seq_length': None, 
+                'max_seq_length': 128, 
                 'num_pretrain_epochs': 100,
                 'num_train_epochs': 100,
                 'num_labels': 100, # verificar melhor o numero de labels e quem sabe estimar de alguma forma

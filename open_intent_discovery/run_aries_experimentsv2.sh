@@ -2,8 +2,8 @@
 #SBATCH --job-name=usnid     
 #SBATCH --time=7-0         
 #SBATCH --gpus=1                   
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=32G                  
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=48G                  
 #SBATCH --output=TEXTOIR_USNID_%j.out 
 #SBATCH --error=TEXTOIR_USNID_%j.err  
 #SBATCH --qos=high
@@ -37,7 +37,8 @@ if [[ "$1" == "scibert" ]]; then
                     --config_file_name UnsupUSNID \
                     --cluster_num_factor $cluster_num_factor \
                     --backbone 'bert_USNID_Unsup' \
-                    --gpu_id '1' \
+                    --gpu_id '0' \
+                    --num_workers 8 \
                     --save_model \
                     --save_results \
                     --model_path "/home/caiosouza/nlp/models/scibert_scivocab_uncased" \
@@ -66,7 +67,8 @@ elif [[ "$1" == "specter2" ]]; then
                         --config_file_name UnsupUSNID \
                         --cluster_num_factor $cluster_num_factor \
                         --backbone 'bert_USNID_Unsup' \
-                        --gpu_id '1' \
+                        --gpu_id '0' \
+                        --num_workers 8 \
                         --save_model \
                         --save_results \
                         --model_path "/home/caiosouza/nlp/models/specter2_base" \
@@ -92,7 +94,8 @@ elif [[ "$1" == "bge" ]]; then
                         --config_file_name UnsupUSNID \
                         --cluster_num_factor $cluster_num_factor \
                         --backbone 'sbert' \
-                        --gpu_id '1' \
+                        --gpu_id '0' \
+                        --num_workers 8 \
                         --save_model \
                         --save_results \
                         --model_path "/home/caiosouza/nlp/models/bge-base-en-v1.5" \
