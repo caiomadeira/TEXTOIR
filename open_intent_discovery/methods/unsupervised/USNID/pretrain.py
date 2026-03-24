@@ -53,9 +53,9 @@ class PretrainUnsupUSNIDManager:
                 print("erro total, entao vamos de predict_k normal do usnid")
                 self.num_labels = self.predict_k(args, data)
             self.logger.info(f"final K estimate dand defined for train= {self.num_labels}")
-            
-        self.model.to(torch.device('cpu'))
-        torch.cuda.empty_cache()
+        else:
+            self.logger.info(f"factor <= 1. Keeping base K estimate = {self.num_labels}")
+
 
     def predict_k_hybrid(self, args, data):
         from sklearn.metrics import silhouette_samples, silhouette_score
