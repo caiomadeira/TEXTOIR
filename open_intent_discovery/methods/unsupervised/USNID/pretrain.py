@@ -49,6 +49,9 @@ class PretrainUnsupUSNIDManager:
                 self.num_labels = self.predict_k(args, data)
             elif args.predict_k == "silhouette_based":
                 self.num_labels = self.predict_k_hybrid(args, data)
+            else:
+                print("erro total, entao vamos de predict_k normal do usnid")
+                self.num_labels = self.predict_k(args, data)
             self.logger.info(f"final K estimate dand defined for train= {self.num_labels}")
             
         self.model.to(torch.device('cpu'))
