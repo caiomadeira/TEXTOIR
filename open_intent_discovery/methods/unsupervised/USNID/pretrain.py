@@ -41,7 +41,7 @@ class PretrainUnsupUSNIDManager:
             
         else:
             self.model = restore_model(self.model, os.path.join(args.method_output_dir, 'pretrain'))
-
+        self.num_labels = data.num_labels
         if args.cluster_num_factor > 1:
             self.num_labels = data.num_labels
             # self.num_labels = self.predict_k_hybrid(args, data)
